@@ -1,0 +1,106 @@
+# ==============================
+# INSTALL DEPENDENCIES (STABLE)
+# ==============================
+!pip install -q face_recognition opencv-python-headless matplotlib
+
+# ==============================
+# IMPORTS
+# ==============================
+import face_recognition
+import cv2
+import matplotlib.pyplot as plt
+from google.colab import files
+import os
+
+# ==============================
+# UPLOAD KNOWN FACE IMAGES
+# Filename = Person Name
+# ==============================
+print("📌 Upload KNOWN face images (filename = person name)")
+known_files = files.upload()
+
+known_encodings = []
+known_names = []
+
+for file in known_files:
+    name = os.path.splitext(file)[0]
+    image = face_recognition.load_image_file(file)
+    encodings = face_recognition.face_encodings(image)
+
+    if len(encodings) == 0:
+        print(f"❌ No face found in {file}")
+        continue
+
+    known_encodings.append(encodings[0])
+    known_names.append(name)
+    print(f"✅ Registered: {name}")
+
+# ==============================
+# UPLOAD GROUP IMAGE
+# ==============================
+print("\n📌 Upload GROUP image")
+group_file = files.upload()
+group_image_path = list(group_file.keys())[0]
+
+image = face_recognition.load_image_file(group_image_path)
+face_locations = face_recognition.face_locations(image)
+face_encodings = face_recognition.face_encodings(image, face_locations)
+
+image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+recognized_names = []
+
+# ==============================
+# FACE DETECTION & RECOGNITION
+# ==============================
+for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+
+    matches = face_recognition.compare_faces(
+        known_encodings, face_encoding, tolerance=0.5
+    )
+
+    name = "Unknown"
+    if True in matches:
+        name = known_names[matches.index(True)]
+
+    recognized_names.append(name)
+
+    # Thin light-green box
+    cv2.rectangle(image_bgr, (left, top), (right, bottom), (0,180,0), 1)
+
+    # Small label background
+    (w, h), _ = cv2.getTextSize(name, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)
+    cv2.rectangle(
+        image_bgr,
+        (left, top - h - 6),
+        (left + w + 4, top),
+        (0,180,0),
+        -1
+    )
+
+    # Small text
+    cv2.putText(
+        image_bgr,
+        name,
+        (left + 2, top - 3),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.4,
+        (0,0,0),
+        1
+    )
+
+# ==============================
+# DISPLAY OUTPUT
+# ==============================
+plt.figure(figsize=(10, 8))
+plt.imshow(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB))
+plt.axis("off")
+plt.title(f"Total Faces Detected: {len(face_locations)}")
+plt.show()
+
+# ==============================
+# SUMMARY
+# ==============================
+print("👥 Total Faces Detected:", len(face_locations))
+print("✅ Recognized:", sorted(set(n for n in recognized_names if n != "Unknown")))
+print("❓ Unknown Faces:", recognized_names.count("Unknown"))

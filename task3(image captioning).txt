@@ -1,0 +1,54 @@
+# =====================================================
+# IMAGE CAPTIONING: IMAGE INPUT → TEXT OUTPUT (COLAB)
+# USING PRETRAINED ViT + GPT2 MODEL
+# =====================================================
+
+# -------- 1. INSTALL DEPENDENCIES --------
+!pip install -q transformers pillow torch torchvision
+
+# -------- 2. IMPORT LIBRARIES --------
+import torch
+from transformers import VisionEncoderDecoderModel, ViTImageProcessor, AutoTokenizer
+from PIL import Image
+from google.colab import files
+from IPython.display import display
+import warnings, os
+
+warnings.filterwarnings("ignore")
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "true"
+
+# -------- 3. LOAD PRETRAINED MODEL --------
+model_name = "nlpconnect/vit-gpt2-image-captioning"
+
+model = VisionEncoderDecoderModel.from_pretrained(model_name)
+processor = ViTImageProcessor.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
+print("✅ Model loaded on:", device)
+
+# -------- 4. UPLOAD IMAGE --------
+print("\n📤 Upload an image (jpg/png):")
+uploaded = files.upload()
+image_path = list(uploaded.keys())[0]
+
+# -------- 5. DISPLAY IMAGE --------
+image = Image.open(image_path).convert("RGB")
+display(image)
+
+# -------- 6. GENERATE CAPTION --------
+pixel_values = processor(images=image, return_tensors="pt").pixel_values.to(device)
+
+output_ids = model.generate(
+    pixel_values,
+    max_length=20,
+    num_beams=4
+)
+
+caption = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+
+# -------- 7. OUTPUT RESULT --------
+print("\n📝 Generated Caption:")
+print(caption)

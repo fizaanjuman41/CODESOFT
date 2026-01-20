@@ -1,0 +1,106 @@
+# ==========================================================
+# MOVIE RECOMMENDATION SYSTEM (INTERNSHIP READY)
+# Languages: English | Hindi | Telugu
+# Themes   : Emotion | Love | Drama
+# ==========================================================
+
+movies = [
+    # -------- ENGLISH --------
+    {"title": "Forrest Gump", "language": "English", "theme": "Emotion", "rating": 4.8},
+    {"title": "The Pursuit of Happyness", "language": "English", "theme": "Emotion", "rating": 4.7},
+    {"title": "CODA", "language": "English", "theme": "Emotion", "rating": 4.6},
+    {"title": "A Beautiful Mind", "language": "English", "theme": "Emotion", "rating": 4.6},
+    {"title": "The Whale", "language": "English", "theme": "Emotion", "rating": 4.5},
+
+    {"title": "Titanic", "language": "English", "theme": "Love", "rating": 4.8},
+    {"title": "Me Before You", "language": "English", "theme": "Love", "rating": 4.6},
+    {"title": "La La Land", "language": "English", "theme": "Love", "rating": 4.5},
+    {"title": "The Fault in Our Stars", "language": "English", "theme": "Love", "rating": 4.6},
+    {"title": "Pride and Prejudice", "language": "English", "theme": "Love", "rating": 4.4},
+
+    {"title": "Oppenheimer", "language": "English", "theme": "Drama", "rating": 4.7},
+    {"title": "Joker", "language": "English", "theme": "Drama", "rating": 4.6},
+    {"title": "12 Angry Men", "language": "English", "theme": "Drama", "rating": 4.9},
+    {"title": "The Shawshank Redemption", "language": "English", "theme": "Drama", "rating": 4.9},
+    {"title": "The Social Network", "language": "English", "theme": "Drama", "rating": 4.5},
+
+    # -------- HINDI --------
+    {"title": "Taare Zameen Par", "language": "Hindi", "theme": "Emotion", "rating": 4.8},
+    {"title": "Chhichhore", "language": "Hindi", "theme": "Emotion", "rating": 4.6},
+    {"title": "Kesari", "language": "Hindi", "theme": "Emotion", "rating": 4.6},
+    {"title": "Laal Singh Chaddha", "language": "Hindi", "theme": "Emotion", "rating": 4.5},
+    {"title": "Dunki", "language": "Hindi", "theme": "Emotion", "rating": 4.4},
+
+    {"title": "Aashiqui 2", "language": "Hindi", "theme": "Love", "rating": 4.6},
+    {"title": "Kabir Singh", "language": "Hindi", "theme": "Love", "rating": 4.5},
+    {"title": "Veer-Zaara", "language": "Hindi", "theme": "Love", "rating": 4.8},
+    {"title": "Rocky Aur Rani Ki Prem Kahani", "language": "Hindi", "theme": "Love", "rating": 4.4},
+    {"title": "Sita Ramam (Hindi)", "language": "Hindi", "theme": "Love", "rating": 4.7},
+
+    {"title": "3 Idiots", "language": "Hindi", "theme": "Drama", "rating": 4.9},
+    {"title": "Jawan", "language": "Hindi", "theme": "Drama", "rating": 4.6},
+    {"title": "Article 370", "language": "Hindi", "theme": "Drama", "rating": 4.4},
+    {"title": "Animal", "language": "Hindi", "theme": "Drama", "rating": 4.5},
+    {"title": "Dunki", "language": "Hindi", "theme": "Drama", "rating": 4.4},
+
+    # -------- TELUGU --------
+    {"title": "Jersey", "language": "Telugu", "theme": "Emotion", "rating": 4.8},
+    {"title": "Mahanati", "language": "Telugu", "theme": "Emotion", "rating": 4.9},
+    {"title": "Hi Nanna", "language": "Telugu", "theme": "Emotion", "rating": 4.7},
+    {"title": "Shyam Singha Roy", "language": "Telugu", "theme": "Emotion", "rating": 4.6},
+    {"title": "Leader", "language": "Telugu", "theme": "Emotion", "rating": 4.5},
+
+    {"title": "Sita Ramam", "language": "Telugu", "theme": "Love", "rating": 4.8},
+    {"title": "Ye Maaya Chesave", "language": "Telugu", "theme": "Love", "rating": 4.7},
+    {"title": "Hi Nanna", "language": "Telugu", "theme": "Love", "rating": 4.6},
+    {"title": "Geetha Govindam", "language": "Telugu", "theme": "Love", "rating": 4.6},
+    {"title": "Uppena", "language": "Telugu", "theme": "Love", "rating": 4.5},
+
+    {"title": "Rangasthalam", "language": "Telugu", "theme": "Drama", "rating": 4.8},
+    {"title": "Pushpa", "language": "Telugu", "theme": "Drama", "rating": 4.6},
+    {"title": "Salaar", "language": "Telugu", "theme": "Drama", "rating": 4.5},
+    {"title": "Virata Parvam", "language": "Telugu", "theme": "Drama", "rating": 4.4},
+    {"title": "Leader", "language": "Telugu", "theme": "Drama", "rating": 4.5},
+]
+
+def recommend_movies(language, theme):
+    results = [m for m in movies if m["language"] == language and m["theme"] == theme]
+    results.sort(key=lambda x: x["rating"], reverse=True)
+    return results[:5]
+
+print("🎬 MOVIE RECOMMENDATION SYSTEM")
+print("--------------------------------")
+
+name = input("Enter your name: ").strip()
+
+while True:
+    print("\nAvailable Languages:")
+    print("- English\n- Hindi\n- Telugu")
+    language = input("Enter preferred language: ").strip().capitalize()
+
+    print("\nAvailable Themes:")
+    print("- Emotion\n- Love\n- Drama")
+    theme = input("Enter preferred theme: ").strip().capitalize()
+
+    print("\n--------------------------------")
+    print(f"Hello {name}! 👋")
+    print(f"Top 5 {theme} movies in {language}:\n")
+
+    recommended = recommend_movies(language, theme)
+
+    if recommended:
+        for i, movie in enumerate(recommended, 1):
+            print(f"{i}. {movie['title']} ⭐ {movie['rating']}/5")
+
+        # -------- SUMMARY ADDED --------
+        print("\nSummary:")
+        print(f"Language : {language}")
+        print(f"Theme    : {theme}")
+        print(f"Movies   : {len(recommended)}")
+    else:
+        print("No movies found. Please check your input.")
+
+    again = input("\nDo you want to try again? (yes/no): ").strip().lower()
+    if again != "yes":
+        print("\nThank you for using the Movie Recommendation System 🎉")
+        break

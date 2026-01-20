@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tic Tac Toe AI</title>
+
+<style>
+/* ===== GLOBAL ===== */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(135deg, #5f6cff, #7b4ae2);
+    color: #fff;
+}
+
+/* ===== GAME CARD ===== */
+.game {
+    width: 100%;
+    max-width: 380px;
+    padding: 22px;
+    border-radius: 26px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+}
+
+/* ===== HEADER ===== */
+h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.info {
+    margin-top: 6px;
+    font-size: 15px;
+    text-align: center;
+    opacity: 0.9;
+}
+
+/* ===== CONTROLS ===== */
+.controls {
+    margin-top: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+select, button {
+    border: none;
+    outline: none;
+    border-radius: 18px;
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+select {
+    background: rgba(255,255,255,0.9);
+}
+
+button {
+    background: #ffd54f;
+    font-weight: 600;
+}
+
+button:hover {
+    background: #ffca28;
+}
+
+/* ===== BOARD ===== */
+.board {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.cell {
+    aspect-ratio: 1;
+    border: none;
+    border-radius: 18px;
+    font-size: 2.6rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 22px rgba(0,0,0,0.3);
+}
+
+.cell.X { color: #1e88e5; }
+.cell.O { color: #e53935; }
+
+.cell.win {
+    background: linear-gradient(135deg, #4caf50, #81c784);
+    color: #fff;
+    animation: glow 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { transform: scale(1); }
+    to { transform: scale(1.06); }
+}
+
+/* ===== STATUS ===== */
+#status {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 420px) {
+    .game { margin: 12px; }
+    .cell { font-size: 2.2rem; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+    <h1>Tic Tac Toe 🤖</h1>
+    <div class="info">
+        Human (<span style="color:#1e88e5">X</span>) |
+        Robo (<span style="color:#e53935">O</span>)
+    </div>
+
+    <div class="controls">
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard" selected>Unbeatable</option>
+        </select>
+        <button onclick="resetGame()">Restart</button>
+    </div>
+
+    <div class="board" id="board"></div>
+    <div id="status"></div>
+</div>
+
+<!-- ===== SOUNDS ===== -->
+<audio id="moveSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9c3b18.mp3"></audio>
+<audio id="winSound" src="https://cdn.pixabay.com/audio/2022/03/10/audio_7f3a3f28b6.mp3"></audio>
+<audio id="drawSound" src="https://cdn.pixabay.com/audio/2022/10/16/audio_4a50d07c98.mp3"></audio>
+
+<script>
+/* ===== GAME LOGIC ===== */
+const HUMAN = "X";
+const AI = "O";
+let board = Array(9).fill("");
+
+const winPatterns = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+];
+
+const boardDiv = document.getElementById("board");
+const statusText = document.getElementById("status");
+const difficulty = document.getElementById("difficulty");
+
+const moveSound = document.getElementById("moveSound");
+const winSound = document.getElementById("winSound");
+const drawSound = document.getElementById("drawSound");
+
+/* ===== UI ===== */
+function createBoard() {
+    boardDiv.innerHTML = "";
+    board.forEach((cell, i) => {
+        const btn = document.createElement("button");
+        btn.className = "cell " + cell;
+        btn.textContent = cell;
+        btn.onclick = () => humanMove(i);
+        boardDiv.appendChild(btn);
+    });
+}
+
+function humanMove(i) {
+    if (board[i] || getWinner()) return;
+    board[i] = HUMAN;
+    moveSound.play();
+    update();
+    if (!getWinner()) setTimeout(aiMove, 280);
+}
+
+function aiMove() {
+    let move;
+    if (difficulty.value === "easy") {
+        move = randomMove();
+    } else if (difficulty.value === "medium") {
+        move = Math.random() < 0.5 ? randomMove() : bestMove();
+    } else {
+        move = bestMove();
+    }
+    board[move] = AI;
+    moveSound.play();
+    update();
+}
+
+/* ===== AI ===== */
+function randomMove() {
+    const empty = board.map((v,i)=>v==""?i:null).filter(v=>v!==null);
+    return empty[Math.floor(Math.random()*empty.length)];
+}
+
+function bestMove() {
+    let best = -Infinity, move;
+    for (let i=0;i<9;i++) {
+        if (!board[i]) {
+            board[i]=AI;
+            let score = minimax(board,false);
+            board[i]="";
+            if (score>best) { best=score; move=i; }
+        }
+    }
+    return move;
+}
+
+function minimax(b, isMax) {
+    let res = checkWinner(b);
+    if (res) return res===AI ? 1 : res===HUMAN ? -1 : 0;
+
+    if (isMax) {
+        let best=-Infinity;
+        for (let i=0;i<9;i++) if(!b[i]){
+            b[i]=AI;
+            best=Math.max(best,minimax(b,false));
+            b[i]="";
+        }
+        return best;
+    } else {
+        let best=Infinity;
+        for (let i=0;i<9;i++) if(!b[i]){
+            b[i]=HUMAN;
+            best=Math.min(best,minimax(b,true));
+            b[i]="";
+        }
+        return best;
+    }
+}
+
+/* ===== GAME STATUS ===== */
+function checkWinner(b=board) {
+    for (let p of winPatterns) {
+        const [a,b1,c] = p;
+        if (b[a] && b[a]===b[b1] && b[a]===b[c]) return b[a];
+    }
+    return b.every(x=>x) ? "draw" : null;
+}
+
+function getWinner() {
+    let res = checkWinner();
+    if (!res) return null;
+
+    if (res==="draw") {
+        statusText.textContent="Draw!";
+        drawSound.play();
+    } else {
+        statusText.textContent=res+" Wins!";
+        winSound.play();
+        highlight(res);
+    }
+    disableBoard();
+    return res;
+}
+
+function highlight(player) {
+    winPatterns.forEach(p=>{
+        if (p.every(i=>board[i]===player)){
+            p.forEach(i=>boardDiv.children[i].classList.add("win"));
+        }
+    });
+}
+
+function disableBoard() {
+    document.querySelectorAll(".cell").forEach(btn=>btn.disabled=true);
+}
+
+function update() {
+    createBoard();
+    getWinner();
+}
+
+function resetGame() {
+    board = Array(9).fill("");
+    statusText.textContent="";
+    createBoard();
+}
+
+createBoard();
+</script>
+
+</body>
+</html>
